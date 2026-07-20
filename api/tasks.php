@@ -18,9 +18,11 @@ function addTask(&$tasks, $title, $due_date = null)
         "id" => $newId,
         "title" => $title,
         "status" => "open",
-        "due_date" =>
-            $due_date
+        "due_date" => $due_date
     ];
+    $tasks[] = $task;
+    return $task;
+}
     $tasks[] = $task;
     return $task;
 }
@@ -30,11 +32,10 @@ switch ($action) {
     case 'list':
         echo json_encode($tasks);
         break;
-    // inside the switch:
-    case 'add':
-        $input = json_decode(file_get_contents('php://input'), true);
-        $due = $input['due_date'] ?? null;
-        $task = addTask($tasks, $input['title'], $due);
+case 'add':
+            $input = json_decode(file_get_contents('php://input'), true);
+            $due = $input['due_date'] ?? null;
+            $task = addTask($tasks, $input['title'], $due);
         saveTasks($dataFile, $tasks);
         echo json_encode($task);
         break;
@@ -50,4 +51,14 @@ switch ($action) {
     default:
         http_response_code(400);
         echo json_encode(["error" => "Unknown action"]);
+
+
+    case 'search':
+        $q = strtolower($_GET['q'] ?? '');
+        $results = array_values(array_filter($tasks, function ($t) use ($q) {
+            return strpos(strtolower($t['title']), $q) !== false;
+        }));
+        echo json_encode($results);
+        break;
+
 }
