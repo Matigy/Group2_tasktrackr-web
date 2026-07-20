@@ -4,15 +4,35 @@ async function loadTasks() {
     const tasks = await res.json();
     renderTasks(tasks);
 }
+
 function renderTask(task) {
-    return `<li class="task-item" data-id="${task.id}">
-<span>${task.title}</span>
-</li>`;
+function renderTask(task) {
+    const overdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== "done";
+    return `<li class="task-item ${overdue ? 'overdue' : ''}" data-id="${task.id}">
+        <span>${task.title}</span>
+        <span class="due-date">${task.due_date ? "Due " + task.due_date : ""}</span>
+    </li>`;
 }
+}
+
 function renderTasks(tasks) {
     const list = document.getElementById("task-list");
     list.innerHTML = tasks.map(renderTask).join('');
 }
+
+document.getElementById("task-form").addEventListener("submit", async(e) => {
+    e.preventDefault();
+    const title = document.getElementById("title").value;
+    const due_date = document.getElementById("due_date").value;
+    await fetch(`${API_URL}?action=add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // inside the form submit handler, add due_date to the request body:
+        body: JSON.stringify({ title, due_date }),
+    });
+    document.getElementById("title").value = "";
+    loadTasks();
+
 document.getElementById("task-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = document.getElementById("title").value;
@@ -29,5 +49,6 @@ document.getElementById("search").addEventListener("input", async (e) => {
     const res = await fetch(`${API_URL}?action=search&q=${encodeURIComponent(q)}`);
     const tasks = await res.json();
     renderTasks(tasks);
+
 });
 loadTasks();
